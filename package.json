@@ -8,11 +8,13 @@
     "start": "node app.js",
     "desktop": "electron .",
     "build": "electron-builder --mac",
+    "build:win": "electron-builder --win nsis zip",
     "list:outputs": "node app.js --list-outputs",
     "list:voices": "node app.js --list-voices",
     "doctor": "node app.js --doctor",
     "setup": "node app.js --setup",
-    "stage:blackhole": "node scripts/stage-blackhole.js"
+    "stage:blackhole": "node scripts/stage-blackhole.js",
+    "stage:vbcable": "node scripts/stage-vbcable.js"
   },
   "engines": {
     "node": ">=18"
@@ -39,12 +41,25 @@
         "filter": [
           "**/*"
         ]
+      },
+      {
+        "from": "resources/vbcable",
+        "to": "vbcable",
+        "filter": [
+          "**/*"
+        ]
       }
     ],
     "mac": {
       "category": "public.app-category.productivity",
       "target": [
         "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis",
         "zip"
       ]
     }

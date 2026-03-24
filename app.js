@@ -14,8 +14,8 @@ function printHelp() {
   console.log(`                      Default virtual mic device: "${DEFAULT_LOOPBACK_DEVICE}"`);
   console.log('--list-voices        List available macOS voices and exit');
   console.log('--list-outputs       List available output devices and exit');
-  console.log('--doctor             Inspect voices, audio devices, and BlackHole readiness');
-  console.log('--setup              Show the BlackHole setup steps');
+  console.log('--doctor             Inspect voices, audio devices, and virtual-driver readiness');
+  console.log('--setup              Show the current platform setup steps');
   console.log('--help               Show this help');
   console.log('');
   console.log('Interactive commands:');
@@ -122,14 +122,13 @@ async function printList(title, values) {
 async function printDoctorReport(report) {
   console.log('AFA doctor');
   console.log(`Kernel: ${report.osVersion}`);
+  console.log(`Driver: ${report.driverName}`);
   console.log(`Voices visible to say: ${report.voiceCount}`);
   console.log(`Audio devices visible to say: ${report.sayAudioCount}`);
   console.log(`Output devices visible to SwitchAudioSource: ${report.switchOutputCount}`);
   console.log(`Current output: ${report.currentOutput || 'not reported'}`);
-  console.log(`BlackHole entries in HAL: ${report.blackHoleInHal.length > 0 ? report.blackHoleInHal.join(', ') : 'none'}`);
-  console.log(
-    `BlackHole installer packages: ${report.blackHoleInPackages.length > 0 ? report.blackHoleInPackages.join(', ') : 'none'}`
-  );
+  console.log(`Driver file matches: ${report.blackHoleInHal.length > 0 ? report.blackHoleInHal.join(', ') : 'none'}`);
+  console.log(`Driver package matches: ${report.blackHoleInPackages.length > 0 ? report.blackHoleInPackages.join(', ') : 'none'}`);
 
   if (report.notes.length === 0) {
     console.log('No obvious issues detected.');
@@ -141,7 +140,7 @@ async function printDoctorReport(report) {
 }
 
 function printSetup(steps) {
-  console.log('AFA BlackHole setup');
+  console.log('AFA setup');
   steps.forEach((step, index) => console.log(`${index + 1}. ${step}`));
 }
 

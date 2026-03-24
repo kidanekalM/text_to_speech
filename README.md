@@ -39,6 +39,12 @@ Packaged macOS build:
 npm run build
 ```
 
+Packaged Windows build:
+
+```bash
+npm run build:win
+```
+
 CLI/debug mode:
 
 ```bash
@@ -72,6 +78,11 @@ Scaffold location:
 
 - [`resources/blackhole/README.txt`](/Users/kidanekal/Desktop/code/text_to_speech/resources/blackhole/README.txt)
 - [`scripts/stage-blackhole.js`](/Users/kidanekal/Desktop/code/text_to_speech/scripts/stage-blackhole.js)
+
+Windows scaffold:
+
+- [`resources/vbcable/README.txt`](/Users/kidanekal/Desktop/code/text_to_speech/resources/vbcable/README.txt)
+- [`scripts/stage-vbcable.js`](/Users/kidanekal/Desktop/code/text_to_speech/scripts/stage-vbcable.js)
 
 ## Desktop UI
 
@@ -107,7 +118,23 @@ What is already implemented:
 - in-app install command that will use a bundled `.pkg`
 - packaged-app resource lookup via `process.resourcesPath`
 - `electron-builder` config that copies `resources/blackhole` into the app bundle
+- `electron-builder` config that copies `resources/vbcable` into Windows builds
 - onboarding state in the floating UI
+
+## Windows Backend Status
+
+Windows support is now scaffolded, not finished.
+
+Implemented:
+
+- Windows TTS backend using PowerShell / `System.Speech`
+- Windows driver manager scaffold for `VB-CABLE`
+- Windows packaging target via `npm run build:win`
+
+Not implemented yet:
+
+- automatic Windows output switching
+- polished Windows virtual-mic onboarding and verification on a real Windows machine
 
 What still depends on the final packaged build:
 
