@@ -1,0 +1,53 @@
+{
+  "name": "text-to-speech-virtual-mic",
+  "version": "1.0.0",
+  "description": "Floating macOS text-to-speech app that targets a BlackHole virtual microphone.",
+  "main": "desktop/main.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node app.js",
+    "desktop": "electron .",
+    "build": "electron-builder --mac",
+    "list:outputs": "node app.js --list-outputs",
+    "list:voices": "node app.js --list-voices",
+    "doctor": "node app.js --doctor",
+    "setup": "node app.js --setup",
+    "stage:blackhole": "node scripts/stage-blackhole.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "electron": "^35.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.afa.desktop",
+    "productName": "AFA",
+    "files": [
+      "desktop/**/*",
+      "lib/**/*",
+      "resources/**/*",
+      "app.js",
+      "package.json",
+      "README.md"
+    ],
+    "extraResources": [
+      {
+        "from": "resources/blackhole",
+        "to": "blackhole",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    }
+  },
+  "license": "MIT"
+}
