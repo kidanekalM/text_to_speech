@@ -1,5 +1,6 @@
+const fs = require('fs');
 const path = require('path');
-const { app, BrowserWindow, ipcMain, nativeImage, nativeTheme, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, nativeTheme, screen } = require('electron');
 const { AfaController, DEFAULT_LOOPBACK_DEVICE } = require('../lib/afa-controller');
 
 const WINDOW_SIZES = {
@@ -8,9 +9,9 @@ const WINDOW_SIZES = {
 };
 
 const WINDOW_MARGIN = 18;
-const APP_ICON_PATH = path.join(process.cwd(), 'build', 'icon.png');
 
 let mainWindow = null;
+let tray = null;
 const controller = new AfaController({
   config: {
     routingMode: 'device',
@@ -19,6 +20,23 @@ const controller = new AfaController({
     startupWarning: 'AFA is waiting for the BlackHole virtual mic to become available.'
   }
 });
+
+function resolveAppIconPath() {
+  const candidates = [
+    path.join(process.cwd(), 'build', 'icon.png'),
+    path.join(__dirname, '..', 'build', 'icon.png'),
+    path.join(app.getAppPath(), 'build', 'icon.png')
+  ];
+
+  return candidates.find((candidate) => fs.existsSync(candidate)) || candidates[0];
+}
+
+function getAppIcon() {
+  const iconPath = resolveAppIconPath();
+  const image = nativeImage.createFromPath(iconPath);
+
+  return image.isEmpty() ? null : image;
+}
 
 function getPinnedBounds(size) {
   const display = screen.getDisplayNearestPoint(screen.getCursorScreenPoint());
@@ -33,7 +51,7 @@ function getPinnedBounds(size) {
 }
 
 function createWindow() {
-  const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
+  const appIcon = getAppIcon();
 
   mainWindow = new BrowserWindow({
     ...getPinnedBounds(WINDOW_SIZES.compact),
@@ -46,9 +64,9 @@ function createWindow() {
     vibrancy: 'hud',
     visualEffectState: 'active',
     alwaysOnTop: true,
-    skipTaskbar: false,
+    skipTaskbar: true,
     backgroundColor: '#00000000',
-    icon: appIcon.isEmpty() ? undefined : APP_ICON_PATH,
+    icon: appIcon || undefined,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -88,6 +106,50 @@ function createWindow() {
   });
 }
 
+function revealWindow() {
+  if (!mainWindow) {
+    createWindow();
+  }
+
+  if (!mainWindow) {
+    return;
+  }
+
+  if (mainWindow.isMinimized()) {
+    mainWindow.restore();
+  }
+
+  mainWindow.show();
+  applyStickyWindowBehavior();
+  mainWindow.moveTop();
+  mainWindow.focus();
+}
+
+function createTray() {
+  const appIcon = getAppIcon();
+
+  if (!appIcon) {
+    return;
+  }
+
+  tray = new Tray(appIcon.resize({ width: 18, height: 18 }));
+  tray.setToolTip('AFA');
+  tray.setContextMenu(Menu.buildFromTemplate([
+    {
+      label: 'Show AFA',
+      click: () => revealWindow()
+    },
+    {
+      label: 'Quit',
+      click: async () => {
+        await controller.shutdown();
+        app.quit();
+      }
+    }
+  ]));
+  tray.on('click', () => revealWindow());
+}
+
 function applyStickyWindowBehavior() {
   if (!mainWindow) {
     return;
@@ -119,15 +181,10 @@ function resizeWindow(mode) {
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'light';
   if (process.platform === 'darwin' && app.dock) {
-    const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
-
-    app.dock.show();
-
-    if (!appIcon.isEmpty()) {
-      app.dock.setIcon(appIcon);
-    }
+    app.dock.hide();
   }
   await bootstrap();
+  createTray();
   createWindow();
 
   screen.on('display-metrics-changed', () => {
@@ -155,12 +212,11 @@ app.whenReady().then(async () => {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      revealWindow();
       return;
     }
 
-    applyStickyWindowBehavior();
-    mainWindow.moveTop();
+    revealWindow();
   });
 });
 
