@@ -5,6 +5,8 @@ const speakBtn = document.getElementById('speakBtn');
 const clearBtn = document.getElementById('clearBtn');
 const retryDriverBtn = document.getElementById('retryDriverBtn');
 const installDriverBtn = document.getElementById('installDriverBtn');
+const restoreAudioBtn = document.getElementById('restoreAudioBtn');
+const testSpeakerBtn = document.getElementById('testSpeakerBtn');
 const setupBtn = document.getElementById('setupBtn');
 const doctorBtn = document.getElementById('doctorBtn');
 const saveRouteBtn = document.getElementById('saveRouteBtn');
@@ -56,6 +58,22 @@ async function refreshStatus() {
 
   if (state.startupWarning) {
     setMessage(state.startupWarning);
+  }
+}
+
+async function refreshAudioSafety() {
+  try {
+    const safety = await window.afa.getAudioSafety();
+
+    restoreAudioBtn.disabled = !safety.canRestore;
+    testSpeakerBtn.disabled = false;
+
+    if (safety.virtualOutputActive) {
+      setMessage(`Audio is currently on ${safety.currentOutput}. Use "Normal Audio" to restore ${safety.restoreTarget || 'your real speakers'}.`);
+    }
+  } catch (error) {
+    restoreAudioBtn.disabled = false;
+    testSpeakerBtn.disabled = false;
   }
 }
 
@@ -154,6 +172,7 @@ clearBtn.addEventListener('click', () => {
 retryDriverBtn.addEventListener('click', async () => {
   await refreshDriverState();
   await refreshStatus();
+  await refreshAudioSafety();
 });
 
 installDriverBtn.addEventListener('click', async () => {
@@ -164,6 +183,33 @@ installDriverBtn.addEventListener('click', async () => {
     setMessage(error.message || String(error));
   } finally {
     await refreshDriverState();
+    await refreshAudioSafety();
+  }
+});
+
+restoreAudioBtn.addEventListener('click', async () => {
+  try {
+    const state = await window.afa.restoreNormalAudio();
+    setMessage(state.startupWarning || 'Restored normal audio.');
+    await refreshStatus();
+    await refreshAudioSafety();
+  } catch (error) {
+    setMessage(error.message || String(error));
+  }
+});
+
+testSpeakerBtn.addEventListener('click', async () => {
+  testSpeakerBtn.disabled = true;
+
+  try {
+    await window.afa.testSpeaker();
+    setMessage('Played speaker test. If you heard it, normal audio is working.');
+    await refreshStatus();
+    await refreshAudioSafety();
+  } catch (error) {
+    setMessage(error.message || String(error));
+  } finally {
+    testSpeakerBtn.disabled = false;
   }
 });
 
@@ -235,6 +281,7 @@ saveRouteBtn.addEventListener('click', async () => {
 
     await refreshStatus();
     await refreshDriverState();
+    await refreshAudioSafety();
   } catch (error) {
     setMessage(error.message || String(error));
   }
@@ -247,6 +294,7 @@ refreshBtn.addEventListener('click', async () => {
     setMessage(lines.join('\n'));
     await refreshStatus();
     await refreshDriverState();
+    await refreshAudioSafety();
   } catch (error) {
     setMessage(error.message || String(error));
   }
@@ -256,6 +304,7 @@ async function init() {
   await loadVoices();
   await refreshDriverState();
   await refreshStatus();
+  await refreshAudioSafety();
   textInput.focus();
 }
 

@@ -7,6 +7,7 @@
   "scripts": {
     "start": "node app.js",
     "desktop": "electron .",
+    "icons": "node scripts/generate-icons.js",
     "build": "electron-builder --mac",
     "build:win": "electron-builder --win nsis zip",
     "list:outputs": "node app.js --list-outputs",
@@ -26,6 +27,9 @@
   "build": {
     "appId": "com.afa.desktop",
     "productName": "AFA",
+    "directories": {
+      "buildResources": "build"
+    },
     "files": [
       "desktop/**/*",
       "lib/**/*",
@@ -52,12 +56,14 @@
     ],
     "mac": {
       "category": "public.app-category.productivity",
+      "icon": "build/icon.icns",
       "target": [
         "dmg",
         "zip"
       ]
     },
     "win": {
+      "icon": "build/icon.ico",
       "target": [
         "nsis",
         "zip"

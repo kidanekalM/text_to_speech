@@ -1,13 +1,14 @@
 const path = require('path');
-const { app, BrowserWindow, ipcMain, nativeTheme, screen } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeImage, nativeTheme, screen } = require('electron');
 const { AfaController, DEFAULT_LOOPBACK_DEVICE } = require('../lib/afa-controller');
 
 const WINDOW_SIZES = {
   compact: { width: 280, height: 158 },
-  expanded: { width: 280, height: 344 }
+  expanded: { width: 280, height: 384 }
 };
 
 const WINDOW_MARGIN = 18;
+const APP_ICON_PATH = path.join(process.cwd(), 'build', 'icon.png');
 
 let mainWindow = null;
 const controller = new AfaController({
@@ -32,6 +33,8 @@ function getPinnedBounds(size) {
 }
 
 function createWindow() {
+  const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
+
   mainWindow = new BrowserWindow({
     ...getPinnedBounds(WINDOW_SIZES.compact),
     frame: false,
@@ -43,8 +46,9 @@ function createWindow() {
     vibrancy: 'hud',
     visualEffectState: 'active',
     alwaysOnTop: true,
-    skipTaskbar: true,
+    skipTaskbar: false,
     backgroundColor: '#00000000',
+    icon: appIcon.isEmpty() ? undefined : APP_ICON_PATH,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -56,11 +60,25 @@ function createWindow() {
   mainWindow.setHiddenInMissionControl(true);
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
+  mainWindow.on('focus', () => {
+    applyStickyWindowBehavior();
+  });
+
   mainWindow.on('blur', () => {
     if (!mainWindow) {
       return;
     }
 
+    applyStickyWindowBehavior();
+    mainWindow.moveTop();
+  });
+
+  mainWindow.on('show', () => {
+    applyStickyWindowBehavior();
+    mainWindow.moveTop();
+  });
+
+  mainWindow.on('restore', () => {
     applyStickyWindowBehavior();
     mainWindow.moveTop();
   });
@@ -76,7 +94,10 @@ function applyStickyWindowBehavior() {
   }
 
   mainWindow.setAlwaysOnTop(true, 'screen-saver');
-  mainWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+  mainWindow.setVisibleOnAllWorkspaces(true, {
+    visibleOnFullScreen: true,
+    skipTransformProcessType: true
+  });
 }
 
 async function bootstrap() {
@@ -98,7 +119,13 @@ function resizeWindow(mode) {
 app.whenReady().then(async () => {
   nativeTheme.themeSource = 'light';
   if (process.platform === 'darwin' && app.dock) {
-    app.dock.hide();
+    const appIcon = nativeImage.createFromPath(APP_ICON_PATH);
+
+    app.dock.show();
+
+    if (!appIcon.isEmpty()) {
+      app.dock.setIcon(appIcon);
+    }
   }
   await bootstrap();
   createWindow();
@@ -108,18 +135,37 @@ app.whenReady().then(async () => {
 
     if (mainWindow) {
       applyStickyWindowBehavior();
+      mainWindow.moveTop();
+    }
+  });
+
+  screen.on('display-added', () => {
+    if (mainWindow) {
+      applyStickyWindowBehavior();
+      mainWindow.moveTop();
+    }
+  });
+
+  screen.on('display-removed', () => {
+    if (mainWindow) {
+      applyStickyWindowBehavior();
+      mainWindow.moveTop();
     }
   });
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       createWindow();
+      return;
     }
+
+    applyStickyWindowBehavior();
+    mainWindow.moveTop();
   });
 });
 
 app.on('window-all-closed', async () => {
-  await controller.stop();
+  await controller.shutdown();
 
   if (process.platform !== 'darwin') {
     app.quit();
@@ -131,9 +177,12 @@ ipcMain.handle('afa:list-voices', async () => controller.listVoices());
 ipcMain.handle('afa:list-outputs', async () => controller.listOutputs());
 ipcMain.handle('afa:doctor', async () => controller.inspect());
 ipcMain.handle('afa:driver-state', async () => controller.getDriverState());
+ipcMain.handle('afa:audio-safety', async () => controller.getAudioSafety());
 ipcMain.handle('afa:install-driver', async () => controller.installDriver());
 ipcMain.handle('afa:setup-steps', async () => controller.getSetupSteps());
 ipcMain.handle('afa:speak', async (_event, text) => controller.speak(text));
+ipcMain.handle('afa:restore-normal-audio', async () => controller.restoreNormalAudio());
+ipcMain.handle('afa:test-speaker', async () => controller.testSpeaker());
 ipcMain.handle('afa:set-voice', async (_event, value) => controller.setVoice(value));
 ipcMain.handle('afa:set-rate', async (_event, value) => controller.setRate(value));
 ipcMain.handle('afa:set-mode', async (_event, value) => controller.setMode(value));
@@ -150,7 +199,7 @@ ipcMain.handle('afa:minimize', async () => {
   return true;
 });
 ipcMain.handle('afa:close', async () => {
-  await controller.stop();
+  await controller.shutdown();
   app.quit();
   return true;
 });

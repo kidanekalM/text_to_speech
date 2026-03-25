@@ -1,0 +1,19 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bubble" x1="156" y1="68" x2="340" y2="364" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#184EA6"/>
+      <stop offset="0.72" stop-color="#2A6DD3"/>
+      <stop offset="1" stop-color="#DF5F38"/>
+    </linearGradient>
+  </defs>
+
+  <rect x="108" y="94" width="296" height="236" rx="82" fill="#071228" fill-opacity="0.14"/>
+
+  <rect x="96" y="72" width="308" height="236" rx="86" fill="url(#bubble)"/>
+  <circle cx="344" cy="252" r="68" fill="#DF5F38" fill-opacity="0.34"/>
+  <circle cx="344" cy="252" r="48" fill="url(#bubble)"/>
+
+  <rect x="226" y="120" width="60" height="98" rx="30" fill="white" fill-opacity="0.96"/>
+  <rect x="202" y="226" width="108" height="22" rx="11" fill="white" fill-opacity="0.96"/>
+  <rect x="248" y="248" width="16" height="46" rx="8" fill="white" fill-opacity="0.96"/>
+</svg>
