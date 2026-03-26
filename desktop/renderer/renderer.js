@@ -39,7 +39,11 @@ function setCompactMode(open) {
 }
 
 function setStatus(state) {
-  statusLine.textContent = `${state.output || 'BlackHole 2ch'} | ${state.voice || 'System voice'}`;
+  const outputLabel = state.routingMode === 'system'
+    ? 'System speaker'
+    : state.output || 'BlackHole 2ch';
+
+  statusLine.textContent = `${outputLabel} | ${state.voice || 'System voice'}`;
   rateInput.value = state.rate;
   modeSelect.value = state.routingMode === 'system' ? 'system' : 'device';
   outputInput.value = state.output || 'BlackHole 2ch';
@@ -58,6 +62,8 @@ async function refreshStatus() {
 
   if (state.startupWarning) {
     setMessage(state.startupWarning);
+  } else if (!messageBox.textContent.trim()) {
+    setMessage('Speaker-safe mode is active.');
   }
 }
 

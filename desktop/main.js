@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, nativeTheme, screen } = require('electron');
-const { AfaController, DEFAULT_LOOPBACK_DEVICE } = require('../lib/afa-controller');
+const { AfaController } = require('../lib/afa-controller');
 
 const WINDOW_SIZES = {
   compact: { width: 280, height: 158 },
@@ -14,10 +14,10 @@ let mainWindow = null;
 let tray = null;
 const controller = new AfaController({
   config: {
-    routingMode: 'device',
-    output: DEFAULT_LOOPBACK_DEVICE,
-    speechOutput: DEFAULT_LOOPBACK_DEVICE,
-    startupWarning: 'AFA is waiting for the BlackHole virtual mic to become available.'
+    routingMode: 'system',
+    output: null,
+    speechOutput: null,
+    startupWarning: null
   }
 });
 
@@ -164,8 +164,7 @@ function applyStickyWindowBehavior() {
 
 async function bootstrap() {
   await controller.initialize({
-    mode: 'device',
-    output: DEFAULT_LOOPBACK_DEVICE
+    mode: 'system'
   });
 }
 

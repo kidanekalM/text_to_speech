@@ -207,23 +207,24 @@ function fillCircle(buffer, width, centerX, centerY, radius, color) {
 
 function drawIcon(size) {
   const pixels = Buffer.alloc(size * size * 4, 0);
-  const blueTop = [24, 78, 166, 255];
-  const orangeBottom = [223, 95, 56, 255];
-  const mid = lerpColor(blueTop, orangeBottom, 0.52);
+  const blueTop = [96, 176, 255, 255];
+  const blueBottom = [48, 126, 232, 255];
+  const orangeAccent = [235, 132, 98, 255];
   const shadow = [7, 18, 40, 36];
   const white = [255, 255, 255, 245];
+  const keyColor = [59, 128, 219, 255];
 
   fillRoundedRect(
     pixels,
     size,
     size,
     {
-      x: Math.round(size * 0.21),
-      y: Math.round(size * 0.18),
-      width: Math.round(size * 0.58),
-      height: Math.round(size * 0.46)
+      x: Math.round(size * 0.07),
+      y: Math.round(size * 0.07),
+      width: Math.round(size * 0.86),
+      height: Math.round(size * 0.86)
     },
-    Math.round(size * 0.16),
+    Math.round(size * 0.22),
     shadow
   );
 
@@ -232,31 +233,14 @@ function drawIcon(size) {
     size,
     size,
     {
-      x: Math.round(size * 0.19),
-      y: Math.round(size * 0.14),
-      width: Math.round(size * 0.6),
-      height: Math.round(size * 0.46)
+      x: Math.round(size * 0.05),
+      y: Math.round(size * 0.05),
+      width: Math.round(size * 0.86),
+      height: Math.round(size * 0.86)
     },
-    Math.round(size * 0.17),
+    Math.round(size * 0.23),
     blueTop,
-    orangeBottom
-  );
-
-  fillCircle(
-    pixels,
-    size,
-    Math.round(size * 0.67),
-    Math.round(size * 0.49),
-    Math.round(size * 0.18),
-    [orangeBottom[0], orangeBottom[1], orangeBottom[2], 120]
-  );
-  fillCircle(
-    pixels,
-    size,
-    Math.round(size * 0.67),
-    Math.round(size * 0.49),
-    Math.round(size * 0.13),
-    [0, 0, 0, 0]
+    lerpColor(blueBottom, orangeAccent, 0.1)
   );
 
   fillRoundedRect(
@@ -264,12 +248,12 @@ function drawIcon(size) {
     size,
     size,
     {
-      x: Math.round(size * 0.44),
-      y: Math.round(size * 0.235),
-      width: Math.round(size * 0.12),
-      height: Math.round(size * 0.19)
+      x: Math.round(size * 0.405),
+      y: Math.round(size * 0.19),
+      width: Math.round(size * 0.19),
+      height: Math.round(size * 0.315)
     },
-    Math.round(size * 0.06),
+    Math.round(size * 0.095),
     white
   );
   fillRoundedRect(
@@ -277,12 +261,12 @@ function drawIcon(size) {
     size,
     size,
     {
-      x: Math.round(size * 0.395),
-      y: Math.round(size * 0.44),
-      width: Math.round(size * 0.21),
-      height: Math.round(size * 0.04)
+      x: Math.round(size * 0.32),
+      y: Math.round(size * 0.545),
+      width: Math.round(size * 0.36),
+      height: Math.round(size * 0.078)
     },
-    Math.round(size * 0.02),
+    Math.round(size * 0.036),
     white
   );
   fillRoundedRect(
@@ -290,14 +274,56 @@ function drawIcon(size) {
     size,
     size,
     {
-      x: Math.round(size * 0.485),
-      y: Math.round(size * 0.48),
-      width: Math.round(size * 0.03),
-      height: Math.round(size * 0.09)
+      x: Math.round(size * 0.468),
+      y: Math.round(size * 0.62),
+      width: Math.round(size * 0.07),
+      height: Math.round(size * 0.14)
     },
-    Math.round(size * 0.015),
+    Math.round(size * 0.024),
     white
   );
+
+  const keyWidth = Math.max(6, Math.round(size * 0.028));
+  const keyHeight = Math.max(4, Math.round(size * 0.017));
+  const keyGap = Math.max(4, Math.round(size * 0.016));
+  const firstRowWidth = keyWidth * 5 + keyGap * 4;
+  const secondRowWidth = keyWidth * 4 + keyGap * 3;
+  const firstRowX = Math.round((size - firstRowWidth) / 2);
+  const secondRowX = Math.round((size - secondRowWidth) / 2);
+  const firstRowY = Math.round(size * 0.558);
+  const secondRowY = Math.round(size * 0.584);
+
+  for (let index = 0; index < 5; index += 1) {
+    fillRoundedRect(
+      pixels,
+      size,
+      size,
+      {
+        x: firstRowX + index * (keyWidth + keyGap),
+        y: firstRowY,
+        width: keyWidth,
+        height: keyHeight
+      },
+      Math.max(2, Math.round(size * 0.008)),
+      keyColor
+    );
+  }
+
+  for (let index = 0; index < 4; index += 1) {
+    fillRoundedRect(
+      pixels,
+      size,
+      size,
+      {
+        x: secondRowX + index * (keyWidth + keyGap),
+        y: secondRowY,
+        width: keyWidth,
+        height: keyHeight
+      },
+      Math.max(2, Math.round(size * 0.008)),
+      keyColor
+    );
+  }
 
   return pngFromRgba(size, size, pixels);
 }

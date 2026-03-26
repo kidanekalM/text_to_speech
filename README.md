@@ -36,6 +36,7 @@ npm run desktop
 Packaged macOS build:
 
 ```bash
+npm run build:helper:macos
 npm run build
 ```
 
@@ -102,6 +103,12 @@ The shared application logic is in:
 - [`lib/audio-routing.js`](/Users/kidanekal/Desktop/code/text_to_speech/lib/audio-routing.js)
 - [`lib/doctor.js`](/Users/kidanekal/Desktop/code/text_to_speech/lib/doctor.js)
 
+Native macOS routing scaffold:
+
+- [`native/macos/Package.swift`](/Users/kidanekal/Desktop/code/text_to_speech/native/macos/Package.swift)
+- [`native/macos/Sources/AFAAudioHelper/main.swift`](/Users/kidanekal/Desktop/code/text_to_speech/native/macos/Sources/AFAAudioHelper/main.swift)
+- [`scripts/build-macos-helper.js`](/Users/kidanekal/Desktop/code/text_to_speech/scripts/build-macos-helper.js)
+
 ## What Still Depends On Packaging
 
 The intended end-state is:
@@ -145,5 +152,5 @@ What still depends on the final packaged build:
 ## Notes
 
 - `say` is still the speech engine for the MVP
-- `SwitchAudioSource` remains available as a helper, but the product direction is BlackHole-first, not manual routing-first
+- AFA now prefers the native Core Audio helper for macOS output enumeration/switching when available, with `SwitchAudioSource` only as fallback
 - the CLI remains useful for debugging, but the desktop floater is now the primary UX
