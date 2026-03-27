@@ -46,6 +46,8 @@ Packaged Windows build:
 npm run build:win
 ```
 
+`build:win` now fails fast if `resources/vbcable/VBCABLE_Driver_Pack45.zip` is missing, so the packaged app cannot claim the VB-CABLE installer is bundled when it is not.
+
 CLI/debug mode:
 
 ```bash
@@ -84,6 +86,7 @@ Windows scaffold:
 
 - [`resources/vbcable/README.txt`](/Users/kidanekal/Desktop/code/text_to_speech/resources/vbcable/README.txt)
 - [`scripts/stage-vbcable.js`](/Users/kidanekal/Desktop/code/text_to_speech/scripts/stage-vbcable.js)
+- [`scripts/verify-windows-bundle.js`](/Users/kidanekal/Desktop/code/text_to_speech/scripts/verify-windows-bundle.js)
 
 ## Desktop UI
 

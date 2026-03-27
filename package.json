@@ -10,7 +10,7 @@
     "icons": "node scripts/generate-icons.js",
     "build:helper:macos": "node scripts/build-macos-helper.js",
     "build": "electron-builder --mac",
-    "build:win": "electron-builder --win nsis zip",
+    "build:win": "node scripts/verify-windows-bundle.js && electron-builder --win nsis zip",
     "list:outputs": "node app.js --list-outputs",
     "list:voices": "node app.js --list-voices",
     "doctor": "node app.js --doctor",

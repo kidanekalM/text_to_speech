@@ -24,9 +24,18 @@ const messageBox = document.getElementById('messageBox');
 const settingsPanel = document.getElementById('settingsPanel');
 
 let settingsOpen = false;
+let latestState = null;
 
 function setMessage(text) {
   messageBox.textContent = text;
+}
+
+function getDefaultDeviceLabel() {
+  if (latestState?.platform === 'win32') {
+    return 'CABLE Input';
+  }
+
+  return 'BlackHole 2ch';
 }
 
 function setCompactMode(open) {
@@ -34,19 +43,22 @@ function setCompactMode(open) {
   settingsPanel.classList.toggle('hidden', !open);
   shell.classList.toggle('compact', !open);
   shell.classList.toggle('expanded', open);
-  toggleSettingsBtn.textContent = open ? '×' : '•••';
+  toggleSettingsBtn.textContent = open ? 'x' : '...';
   window.afa.resize(open ? 'expanded' : 'compact');
 }
 
 function setStatus(state) {
+  latestState = state;
+  const defaultDeviceLabel = getDefaultDeviceLabel();
   const outputLabel = state.routingMode === 'system'
     ? 'System speaker'
-    : state.output || 'BlackHole 2ch';
+    : state.output || defaultDeviceLabel;
 
   statusLine.textContent = `${outputLabel} | ${state.voice || 'System voice'}`;
   rateInput.value = state.rate;
   modeSelect.value = state.routingMode === 'system' ? 'system' : 'device';
-  outputInput.value = state.output || 'BlackHole 2ch';
+  outputInput.value = state.output || defaultDeviceLabel;
+  outputInput.placeholder = defaultDeviceLabel;
 
   if (!voiceSelect.dataset.loaded) {
     return;
@@ -85,12 +97,14 @@ async function refreshAudioSafety() {
 
 async function refreshDriverState() {
   const driverState = await window.afa.getDriverState();
+  const driverName = driverState.driverName || latestState?.driverName || 'audio driver';
+  const deviceName = driverState.deviceName || getDefaultDeviceLabel();
   statusDot.classList.remove('ready', 'blocked');
 
   if (driverState.ready) {
     statusDot.classList.add('ready');
-    driverHeadline.textContent = 'BlackHole ready';
-    driverDetail.textContent = 'AFA can now speak into the virtual mic.';
+    driverHeadline.textContent = `${driverName} ready`;
+    driverDetail.textContent = `AFA can now speak into ${deviceName}.`;
     installDriverBtn.disabled = true;
     installDriverBtn.textContent = 'Installed';
     return driverState;
@@ -100,7 +114,7 @@ async function refreshDriverState() {
 
   if (driverState.restartRequired) {
     driverHeadline.textContent = 'Restart required';
-    driverDetail.textContent = 'BlackHole is installed. Restart macOS, then reopen AFA.';
+    driverDetail.textContent = `${driverName} is installed. Restart the system, then reopen AFA.`;
     installDriverBtn.disabled = true;
     installDriverBtn.textContent = 'Installed';
     return driverState;
@@ -108,7 +122,7 @@ async function refreshDriverState() {
 
   if (driverState.installed) {
     driverHeadline.textContent = 'Waiting for virtual mic';
-    driverDetail.textContent = 'BlackHole is on disk, but macOS is not exposing the device yet.';
+    driverDetail.textContent = `${driverName} is installed, but ${deviceName} is not visible yet.`;
     installDriverBtn.disabled = true;
     installDriverBtn.textContent = 'Installed';
     return driverState;
@@ -116,8 +130,8 @@ async function refreshDriverState() {
 
   driverHeadline.textContent = 'Install virtual mic';
   driverDetail.textContent = driverState.bundledInstallerPresent
-    ? 'Install the bundled BlackHole driver from AFA.'
-    : 'Bundle BlackHole2ch.pkg inside AFA to enable one-app installation.';
+    ? `Install the bundled ${driverName} driver from AFA.`
+    : `Bundled ${driverName} package is missing. Add VBCABLE_Driver_Pack45.zip under resources/vbcable.`;
   installDriverBtn.disabled = !driverState.bundledInstallerPresent;
   installDriverBtn.textContent = 'Install Driver';
   return driverState;
@@ -141,13 +155,19 @@ async function loadVoices() {
 async function runDoctor() {
   try {
     const report = await window.afa.doctor();
-    const lines = [
-      `Voices visible to say: ${report.voiceCount}`,
-      `Audio devices visible to say: ${report.sayAudioCount}`,
-      `Output devices visible to SwitchAudioSource: ${report.switchOutputCount}`,
-      `BlackHole on disk: ${report.blackHoleInHal.length > 0 ? 'yes' : 'no'}`,
-      `BlackHole package registered: ${report.blackHoleInPackages.length > 0 ? 'yes' : 'no'}`
-    ];
+    const lines = latestState?.platform === 'win32'
+      ? [
+          `Voices visible to Windows TTS: ${report.voiceCount}`,
+          `Playback devices visible to Windows: ${report.audioDeviceCount}`,
+          `VB-CABLE present: ${report.cableDevices.length > 0 ? 'yes' : 'no'}`
+        ]
+      : [
+          `Voices visible to say: ${report.voiceCount}`,
+          `Audio devices visible to say: ${report.sayAudioCount}`,
+          `Output devices visible to SwitchAudioSource: ${report.switchOutputCount}`,
+          `BlackHole on disk: ${report.blackHoleInHal.length > 0 ? 'yes' : 'no'}`,
+          `BlackHole package registered: ${report.blackHoleInPackages.length > 0 ? 'yes' : 'no'}`
+        ];
 
     if (report.notes.length > 0) {
       lines.push('', ...report.notes.map((note) => `- ${note}`));
@@ -282,7 +302,7 @@ saveRouteBtn.addEventListener('click', async () => {
     await window.afa.setMode(modeSelect.value);
 
     if (modeSelect.value === 'device') {
-      await window.afa.setOutput(outputInput.value.trim() || 'BlackHole 2ch');
+      await window.afa.setOutput(outputInput.value.trim() || getDefaultDeviceLabel());
     }
 
     await refreshStatus();
@@ -308,8 +328,8 @@ refreshBtn.addEventListener('click', async () => {
 
 async function init() {
   await loadVoices();
-  await refreshDriverState();
   await refreshStatus();
+  await refreshDriverState();
   await refreshAudioSafety();
   textInput.focus();
 }

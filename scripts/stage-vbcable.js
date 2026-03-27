@@ -25,16 +25,18 @@ function main() {
     fail(`Source installer not found: ${sourcePath}`);
   }
 
-  if (!sourcePath.toLowerCase().endsWith('.exe')) {
-    fail(`Expected a .exe installer, got: ${sourcePath}`);
+  const lowerSourcePath = sourcePath.toLowerCase();
+
+  if (!lowerSourcePath.endsWith('.zip')) {
+    fail(`Expected the official VB-CABLE zip package, got: ${sourcePath}`);
   }
 
   const destinationDir = path.resolve(process.cwd(), 'resources', 'vbcable');
-  const destinationPath = path.join(destinationDir, 'VBCABLE_Setup_x64.exe');
+  const destinationPath = path.join(destinationDir, 'VBCABLE_Driver_Pack45.zip');
 
   fs.mkdirSync(destinationDir, { recursive: true });
   fs.copyFileSync(sourcePath, destinationPath);
-  console.log(`Staged VB-CABLE installer at ${destinationPath}`);
+  console.log(`Staged VB-CABLE package at ${destinationPath}`);
 }
 
 main();

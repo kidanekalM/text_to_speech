@@ -75,7 +75,9 @@ function createWindow() {
   });
 
   applyStickyWindowBehavior();
-  mainWindow.setHiddenInMissionControl(true);
+  if (process.platform === 'darwin' && typeof mainWindow.setHiddenInMissionControl === 'function') {
+    mainWindow.setHiddenInMissionControl(true);
+  }
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
 
   mainWindow.on('focus', () => {
@@ -217,6 +219,9 @@ app.whenReady().then(async () => {
 
     revealWindow();
   });
+}).catch((error) => {
+  console.error('Electron startup failed:', error);
+  app.quit();
 });
 
 app.on('window-all-closed', async () => {
