@@ -12,7 +12,7 @@ function printHelp() {
   console.log('--mode MODE          Routing mode: system or device');
   console.log('--output DEVICE      Target device when using device mode');
   console.log(`                      Default virtual mic device: "${DEFAULT_LOOPBACK_DEVICE}"`);
-  console.log('--list-voices        List available macOS voices and exit');
+  console.log('--list-voices        List available voices and exit');
   console.log('--list-outputs       List available output devices and exit');
   console.log('--doctor             Inspect voices, audio devices, and virtual-driver readiness');
   console.log('--setup              Show the current platform setup steps');
@@ -123,12 +123,19 @@ async function printDoctorReport(report) {
   console.log('AFA doctor');
   console.log(`Kernel: ${report.osVersion}`);
   console.log(`Driver: ${report.driverName}`);
-  console.log(`Voices visible to say: ${report.voiceCount}`);
-  console.log(`Audio devices visible to say: ${report.sayAudioCount}`);
-  console.log(`Output devices visible to SwitchAudioSource: ${report.switchOutputCount}`);
+  console.log(`Voices visible to the speech engine: ${report.voiceCount}`);
+  console.log(`Visible audio outputs: ${report.audioDeviceCount || report.sayAudioCount}`);
+  console.log(`Visible switchable outputs: ${report.switchOutputCount}`);
   console.log(`Current output: ${report.currentOutput || 'not reported'}`);
-  console.log(`Driver file matches: ${report.blackHoleInHal.length > 0 ? report.blackHoleInHal.join(', ') : 'none'}`);
-  console.log(`Driver package matches: ${report.blackHoleInPackages.length > 0 ? report.blackHoleInPackages.join(', ') : 'none'}`);
+
+  if (Array.isArray(report.cableDevices)) {
+    console.log(`Virtual devices: ${report.cableDevices.length > 0 ? report.cableDevices.join(', ') : 'none'}`);
+  }
+
+  if (Array.isArray(report.blackHoleInHal) && Array.isArray(report.blackHoleInPackages)) {
+    console.log(`Driver file matches: ${report.blackHoleInHal.length > 0 ? report.blackHoleInHal.join(', ') : 'none'}`);
+    console.log(`Driver package matches: ${report.blackHoleInPackages.length > 0 ? report.blackHoleInPackages.join(', ') : 'none'}`);
+  }
 
   if (report.notes.length === 0) {
     console.log('No obvious issues detected.');

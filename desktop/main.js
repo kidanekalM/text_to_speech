@@ -4,7 +4,7 @@ const { app, BrowserWindow, ipcMain, Menu, Tray, nativeImage, nativeTheme, scree
 const { AfaController } = require('../lib/afa-controller');
 
 const WINDOW_SIZES = {
-  compact: { width: 280, height: 158 },
+  compact: { width: 280, height: 170 },
   expanded: { width: 280, height: 384 }
 };
 

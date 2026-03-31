@@ -24,6 +24,11 @@
       </header>
 
       <section class="composer">
+        <div class="route-strip no-drag">
+          <button id="systemRouteBtn" class="route-pill route-pill-active" type="button">System</button>
+          <button id="virtualRouteBtn" class="route-pill" type="button">Virtual Mic</button>
+        </div>
+
         <textarea id="textInput" rows="4" placeholder="Type here, then press Speak or Cmd/Ctrl+Enter."></textarea>
 
         <div class="action-row">
@@ -61,21 +66,12 @@
           </label>
 
           <label>
-            <span>Mode</span>
-            <select id="modeSelect">
-              <option value="system">System</option>
-              <option value="device">Device</option>
-            </select>
-          </label>
-
-          <label>
             <span>Output</span>
             <input id="outputInput" type="text" placeholder="Virtual audio device" />
           </label>
         </div>
 
         <div class="action-row">
-          <button id="saveRouteBtn" class="secondary-btn">Apply</button>
           <button id="refreshBtn" class="secondary-btn">Refresh</button>
         </div>
 

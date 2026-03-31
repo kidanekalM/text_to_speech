@@ -48,6 +48,18 @@ npm run build:win
 
 `build:win` now fails fast if `resources/vbcable/VBCABLE_Driver_Pack45.zip` is missing, so the packaged app cannot claim the VB-CABLE installer is bundled when it is not.
 
+Packaged Linux build:
+
+```bash
+npm run build:linux
+```
+
+Linux runtime requirements:
+
+- `pactl` from PipeWire or PulseAudio for virtual sink/mic creation and routing
+- `espeak-ng`, `espeak`, or `spd-say` for speech
+- `pw-play` or `paplay` for direct routing into the virtual sink
+
 CLI/debug mode:
 
 ```bash

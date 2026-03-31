@@ -9,12 +9,12 @@ const restoreAudioBtn = document.getElementById('restoreAudioBtn');
 const testSpeakerBtn = document.getElementById('testSpeakerBtn');
 const setupBtn = document.getElementById('setupBtn');
 const doctorBtn = document.getElementById('doctorBtn');
-const saveRouteBtn = document.getElementById('saveRouteBtn');
 const refreshBtn = document.getElementById('refreshBtn');
+const systemRouteBtn = document.getElementById('systemRouteBtn');
+const virtualRouteBtn = document.getElementById('virtualRouteBtn');
 const textInput = document.getElementById('textInput');
 const voiceSelect = document.getElementById('voiceSelect');
 const rateInput = document.getElementById('rateInput');
-const modeSelect = document.getElementById('modeSelect');
 const outputInput = document.getElementById('outputInput');
 const driverHeadline = document.getElementById('driverHeadline');
 const driverDetail = document.getElementById('driverDetail');
@@ -25,6 +25,8 @@ const settingsPanel = document.getElementById('settingsPanel');
 
 let settingsOpen = false;
 let latestState = null;
+let routeChangeInFlight = false;
+let preferredVirtualTarget = '';
 
 function setMessage(text) {
   messageBox.textContent = text;
@@ -33,6 +35,10 @@ function setMessage(text) {
 function getDefaultDeviceLabel() {
   if (latestState?.platform === 'win32') {
     return 'CABLE Input';
+  }
+
+  if (latestState?.platform === 'linux') {
+    return 'afa_virtual_sink';
   }
 
   return 'BlackHole 2ch';
@@ -53,12 +59,19 @@ function setStatus(state) {
   const outputLabel = state.routingMode === 'system'
     ? 'System speaker'
     : state.output || defaultDeviceLabel;
+  const nextVirtualTarget = state.routingMode === 'system'
+    ? preferredVirtualTarget || defaultDeviceLabel
+    : state.output || preferredVirtualTarget || defaultDeviceLabel;
 
   statusLine.textContent = `${outputLabel} | ${state.voice || 'System voice'}`;
   rateInput.value = state.rate;
-  modeSelect.value = state.routingMode === 'system' ? 'system' : 'device';
-  outputInput.value = state.output || defaultDeviceLabel;
+  preferredVirtualTarget = nextVirtualTarget;
+  outputInput.value = nextVirtualTarget;
   outputInput.placeholder = defaultDeviceLabel;
+  systemRouteBtn.classList.toggle('route-pill-active', state.routingMode === 'system');
+  virtualRouteBtn.classList.toggle('route-pill-active', state.routingMode !== 'system');
+  systemRouteBtn.disabled = routeChangeInFlight;
+  virtualRouteBtn.disabled = routeChangeInFlight;
 
   if (!voiceSelect.dataset.loaded) {
     return;
@@ -137,6 +150,37 @@ async function refreshDriverState() {
   return driverState;
 }
 
+async function applyRoute(mode) {
+  if (routeChangeInFlight) {
+    return;
+  }
+
+  routeChangeInFlight = true;
+  systemRouteBtn.disabled = true;
+  virtualRouteBtn.disabled = true;
+
+  try {
+    if (mode === 'system') {
+      const state = await window.afa.restoreNormalAudio();
+      setMessage(state.startupWarning || 'Restored normal audio.');
+    } else {
+      await window.afa.setMode('device');
+      preferredVirtualTarget = outputInput.value.trim() || preferredVirtualTarget || getDefaultDeviceLabel();
+      const state = await window.afa.setOutput(preferredVirtualTarget);
+      setMessage(state.startupWarning || 'Virtual mic enabled.');
+    }
+
+    await refreshStatus();
+    await refreshDriverState();
+    await refreshAudioSafety();
+  } catch (error) {
+    setMessage(error.message || String(error));
+  } finally {
+    routeChangeInFlight = false;
+    await refreshStatus();
+  }
+}
+
 async function loadVoices() {
   try {
     const voices = await window.afa.listVoices();
@@ -161,6 +205,12 @@ async function runDoctor() {
           `Playback devices visible to Windows: ${report.audioDeviceCount}`,
           `VB-CABLE present: ${report.cableDevices.length > 0 ? 'yes' : 'no'}`
         ]
+      : latestState?.platform === 'linux'
+        ? [
+            `Voices visible to Linux TTS: ${report.voiceCount}`,
+            `Playback devices visible to Linux: ${report.audioDeviceCount}`,
+            `AFA virtual devices present: ${report.cableDevices.length > 0 ? 'yes' : 'no'}`
+          ]
       : [
           `Voices visible to say: ${report.voiceCount}`,
           `Audio devices visible to say: ${report.sayAudioCount}`,
@@ -193,6 +243,10 @@ toggleSettingsBtn.addEventListener('click', () => {
 clearBtn.addEventListener('click', () => {
   textInput.value = '';
   textInput.focus();
+});
+
+outputInput.addEventListener('change', () => {
+  preferredVirtualTarget = outputInput.value.trim() || getDefaultDeviceLabel();
 });
 
 retryDriverBtn.addEventListener('click', async () => {
@@ -288,30 +342,8 @@ rateInput.addEventListener('change', async () => {
   }
 });
 
-modeSelect.addEventListener('change', async () => {
-  try {
-    await window.afa.setMode(modeSelect.value);
-    await refreshStatus();
-  } catch (error) {
-    setMessage(error.message || String(error));
-  }
-});
-
-saveRouteBtn.addEventListener('click', async () => {
-  try {
-    await window.afa.setMode(modeSelect.value);
-
-    if (modeSelect.value === 'device') {
-      await window.afa.setOutput(outputInput.value.trim() || getDefaultDeviceLabel());
-    }
-
-    await refreshStatus();
-    await refreshDriverState();
-    await refreshAudioSafety();
-  } catch (error) {
-    setMessage(error.message || String(error));
-  }
-});
+systemRouteBtn.addEventListener('click', async () => applyRoute('system'));
+virtualRouteBtn.addEventListener('click', async () => applyRoute('device'));
 
 refreshBtn.addEventListener('click', async () => {
   try {
